@@ -32,6 +32,9 @@ const initializeClient = () => {
                 '--disable-gpu'
             ],
         },
+        webVersionCache: {
+            type: 'none'
+        }
     });
 
     client.on('qr', (qr) => {
