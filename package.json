@@ -1,0 +1,20 @@
+{
+    "name": "ramazan-whatsapp",
+    "version": "1.0.0",
+    "description": "WhatsApp Service for Ramazan App",
+    "main": "index.js",
+    "scripts": {
+        "start": "node index.js"
+    },
+    "dependencies": {
+        "cors": "^2.8.5",
+        "dotenv": "^17.2.3",
+        "express": "^5.1.0",
+        "whatsapp-web.js": "github:pedroslopez/whatsapp-web.js",
+        "puppeteer": "^24.2.1",
+        "qrcode": "^1.5.4"
+    },
+    "engines": {
+        "node": ">=18.0.0"
+    }
+}
