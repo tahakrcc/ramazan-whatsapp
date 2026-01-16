@@ -1,8 +1,10 @@
 const express = require('express');
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
+const cors = require('cors');
 
 const app = express();
+app.use(cors({ origin: '*' }));
 app.use(express.json());
 
 // Global Client Instance
