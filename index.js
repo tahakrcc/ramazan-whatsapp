@@ -28,10 +28,35 @@ let qrCode = null;
 let clientStatus = 'disconnected';
 let clientInfo = null;
 
+// Get Chrome path from environment or use puppeteer's bundled Chrome
+const getChromePath = () => {
+    if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+        return process.env.PUPPETEER_EXECUTABLE_PATH;
+    }
+    // Try to find Chrome in cache directory
+    const cacheDir = process.env.PUPPETEER_CACHE_DIR || '/opt/render/project/src/.cache';
+    const possiblePaths = [
+        `${cacheDir}/puppeteer/chrome/linux-143.0.7499.192/chrome-linux64/chrome`,
+        `${cacheDir}/chrome/linux-143.0.7499.192/chrome-linux64/chrome`,
+        '/usr/bin/google-chrome-stable',
+        '/usr/bin/chromium-browser',
+        '/usr/bin/chromium'
+    ];
+
+    for (const p of possiblePaths) {
+        try {
+            require('fs').accessSync(p);
+            return p;
+        } catch (e) { }
+    }
+    return undefined; // Let puppeteer try to find it
+};
+
 const client = new Client({
     authStrategy: new LocalAuth({ dataPath: './.wwebjs_auth' }),
     puppeteer: {
         headless: true,
+        executablePath: getChromePath(),
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
