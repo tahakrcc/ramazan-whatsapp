@@ -61,14 +61,28 @@ const initializeClient = () => {
         qrCodeData = null;
     });
 
-    client.on('message', async msg => {
+    // DEBUG: Listen to ALL messages (including sent ones) to verify connection
+    client.on('message_create', async msg => {
         try {
-            console.log('Message received:', msg.body);
-            const chat = await msg.getChat();
-            const contact = await msg.getContact();
-            const rawMessage = msg.body.toLowerCase().trim();
+            console.log('--- DEBUG: Message Event Triggered ---');
+            console.log(`From: ${msg.from}`);
+            console.log(`To: ${msg.to}`);
+            console.log(`FromMe: ${msg.fromMe}`);
+            console.log(`Body: ${msg.body}`);
 
-            if (rawMessage === 'ping') return await msg.reply('pong');
+            // SAFETY: Prevent infinite loop (Bot replying to itself)
+            if (msg.fromMe) {
+                console.log('DEBUG: Auto-reply prevented (msg.fromMe)');
+                return;
+            }
+
+            const rawMessage = msg.body.toLowerCase().trim();
+            console.log(`DEBUG: Processing command: "${rawMessage}"`);
+
+            if (rawMessage === 'ping') {
+                console.log('DEBUG: Match PING');
+                return await msg.reply('pong');
+            }
 
             // --- SMART LOGIC ---
             const commands = {
@@ -91,29 +105,37 @@ const initializeClient = () => {
                 }
             }
 
+            console.log(`DEBUG: Best Command Match: ${matchedCommand} (Score: ${bestScore})`);
+
             const mainMenuFooter = `\n\n_Yardımcı olabileceğim diğer konular:_\n- *Randevu*\n- *Adres*\n- *İletişim*`;
             const backFooter = `\n\n📌 _Ana menüye dönmek için *Geri* yazabilirsiniz._`;
 
             if (matchedCommand === 'merhaba') {
+                const contact = await msg.getContact();
                 await client.sendMessage(msg.from, `Merhaba ${contact.pushname || 'Misafir'}! 👋\n\n*By Ramazan* Asistanı'na hoş geldiniz.\n\nSize nasıl yardımcı olabilirim?` + mainMenuFooter);
+                console.log('DEBUG: Reply sent for MERHABA');
             }
             else if (matchedCommand === 'adres') {
                 await client.sendMessage(msg.from, `📍 *Adresimiz:*\nMovenpick Hotel -1 Kat - Malatya\n\n🗺️ *Harita:* https://www.google.com/maps?q=38.351147,38.285103` + backFooter);
+                console.log('DEBUG: Reply sent for ADRES');
             }
             else if (matchedCommand === 'randevu') {
                 await client.sendMessage(msg.from, `📅 *Randevu Oluşturma*\n\nLütfen web sitemizi ziyaret ederek veya 0532 123 45 67 numarasını arayarak randevunuzu planlayın.\n\nwww.byramazan.com` + backFooter);
+                console.log('DEBUG: Reply sent for RANDEVU');
             }
             else if (matchedCommand === 'iletisim') {
                 await client.sendMessage(msg.from, `📞 *İletişim Bilgilerimiz:*\nTelefon: 0532 123 45 67\nWeb: www.byramazan.com` + backFooter);
+                console.log('DEBUG: Reply sent for ILETISIM');
             }
             else if (matchedCommand === 'geri') {
                 await client.sendMessage(msg.from, `🔄 Ana menüye dönüldü.\n\nSize nasıl yardımcı olabilirim?` + mainMenuFooter);
+                console.log('DEBUG: Reply sent for GERI');
+            } else {
+                console.log('DEBUG: No sufficient match, ignoring.');
             }
-            // else: If no match and not very cryptic, maybe show help? 
-            // Disabling default fallback to avoid spamming groups.
 
         } catch (err) {
-            console.error('Error handling message:', err);
+            console.error('CRITICAL DEBUG ERROR:', err);
         }
     });
 
