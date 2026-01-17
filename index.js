@@ -137,7 +137,22 @@ const initializeClient = async () => {
                 console.log('DEBUG: Reply sent for MERHABA');
             }
             else if (matchedCommand === 'adres') {
-                await client.sendMessage(msg.from, `📍 *Adresimiz:*\nMovenpick Hotel -1 Kat - Malatya\n\n🗺️ *Harita:* https://www.google.com/maps?q=38.351147,38.285103` + backFooter);
+                // Fetch dynamic settings
+                let addressText = 'Movenpick Hotel -1 Kat - Malatya';
+                let mapLink = 'https://www.google.com/maps?q=38.351147,38.285103';
+
+                try {
+                    const settingsCollection = mongoose.connection.db.collection('settings');
+                    const settings = await settingsCollection.findOne({});
+                    if (settings) {
+                        if (settings.businessAddress) addressText = settings.businessAddress;
+                        if (settings.businessMapsLink) mapLink = settings.businessMapsLink;
+                    }
+                } catch (dbErr) {
+                    console.error('Error fetching settings:', dbErr);
+                }
+
+                await client.sendMessage(msg.from, `📍 *Adresimiz:*\n${addressText}\n\n🗺️ *Harita:* ${mapLink}` + backFooter);
                 console.log('DEBUG: Reply sent for ADRES');
             }
             else if (matchedCommand === 'randevu') {
