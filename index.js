@@ -56,7 +56,7 @@ const initializeClient = async () => {
                     '--no-default-browser-check',
                     '--renderer-process-limit=1', // Limit to 1 renderer process
                     '--blink-settings=imagesEnabled=false', // Do not load images
-                    '--js-flags="--max-old-space-size=64"', // Limit Chrome JS heap to 64MB
+                    '--js-flags="--max-old-space-size=128"', // Increased to 128MB to allow sync
                     '--disable-software-rasterizer'
                 ],
             },
