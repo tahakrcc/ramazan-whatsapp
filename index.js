@@ -12,6 +12,8 @@ let client;
 let qrCodeData = null;
 let connectionStatus = 'INITIALIZING'; // INITIALIZING, QR_READY, CONNECTED
 
+const stringSimilarity = require('string-similarity');
+
 const initializeClient = () => {
     console.log('Initializing WhatsApp Client...');
     connectionStatus = 'INITIALIZING';
@@ -28,8 +30,17 @@ const initializeClient = () => {
                 '--disable-accelerated-2d-canvas',
                 '--no-first-run',
                 '--no-zygote',
-                '--single-process',
-                '--disable-gpu'
+                '--single-process', // Critical for RAM
+                '--disable-gpu',
+                '--disable-features=site-per-process', // Huge RAM saver
+                '--disable-extensions',
+                '--disable-audio',
+                '--disable-default-apps',
+                '--disable-sync',
+                '--disable-translate',
+                '--metrics-recording-only',
+                '--mute-audio',
+                '--no-default-browser-check'
             ],
         },
         webVersionCache: {
@@ -55,18 +66,52 @@ const initializeClient = () => {
             console.log('Message received:', msg.body);
             const chat = await msg.getChat();
             const contact = await msg.getContact();
-            const message = msg.body.toLowerCase();
+            const rawMessage = msg.body.toLowerCase().trim();
 
-            // Auto-reply logic
-            if (message === 'ping') {
-                await msg.reply('pong');
-            } else if (message.includes('merhaba') || message.includes('selam')) {
-                await client.sendMessage(msg.from, `Merhaba ${contact.pushname || 'Misafir'}! 👋\n\n*By Ramazan* Asistanı'na hoş geldiniz.\n\nSize nasıl yardımcı olabilirim?\n- *Randevu* almak için randevu yazın.\n- *Adres* bilgisi için adres yazın.\n- *İletişim* için iletişim yazın.`);
-            } else if (message.includes('adres') || message.includes('konum')) {
-                await client.sendMessage(msg.from, `📍 *Adresimiz:*\nMovenpick Hotel -1 Kat - Malatya\n\n🗺️ *Harita:* https://www.google.com/maps?q=38.351147,38.285103`);
-            } else if (message.includes('randevu')) {
-                await client.sendMessage(msg.from, `📅 *Randevu Oluşturma*\n\nLütfen web sitemizi ziyaret ederek veya 0532 123 45 67 numarasını arayarak randevunuzu planlayın.\n\nwww.byramazan.com`);
+            if (rawMessage === 'ping') return await msg.reply('pong');
+
+            // --- SMART LOGIC ---
+            const commands = {
+                'merhaba': ['merhaba', 'selam', 'mrb', 'slm', 'gunaydin', 'iyi gunler'],
+                'randevu': ['randevu', 'rndvu', 'randevü', 'yer ayirt', 'rezervasyon'],
+                'adres': ['adres', 'konum', 'yeriniz', 'neredesiniz', 'map'],
+                'iletisim': ['iletisim', 'telefon', 'tel', 'numara', 'ulasim'],
+                'geri': ['geri', 'menu', 'basa don', 'cikis', 'iptal']
+            };
+
+            // Check matches
+            let matchedCommand = null;
+            let bestScore = 0;
+
+            for (const [cmd, variations] of Object.entries(commands)) {
+                const match = stringSimilarity.findBestMatch(rawMessage, variations);
+                if (match.bestMatch.rating > 0.4 && match.bestMatch.rating > bestScore) {
+                    bestScore = match.bestMatch.rating;
+                    matchedCommand = cmd;
+                }
             }
+
+            const mainMenuFooter = `\n\n_Yardımcı olabileceğim diğer konular:_\n- *Randevu*\n- *Adres*\n- *İletişim*`;
+            const backFooter = `\n\n📌 _Ana menüye dönmek için *Geri* yazabilirsiniz._`;
+
+            if (matchedCommand === 'merhaba') {
+                await client.sendMessage(msg.from, `Merhaba ${contact.pushname || 'Misafir'}! 👋\n\n*By Ramazan* Asistanı'na hoş geldiniz.\n\nSize nasıl yardımcı olabilirim?` + mainMenuFooter);
+            }
+            else if (matchedCommand === 'adres') {
+                await client.sendMessage(msg.from, `📍 *Adresimiz:*\nMovenpick Hotel -1 Kat - Malatya\n\n🗺️ *Harita:* https://www.google.com/maps?q=38.351147,38.285103` + backFooter);
+            }
+            else if (matchedCommand === 'randevu') {
+                await client.sendMessage(msg.from, `📅 *Randevu Oluşturma*\n\nLütfen web sitemizi ziyaret ederek veya 0532 123 45 67 numarasını arayarak randevunuzu planlayın.\n\nwww.byramazan.com` + backFooter);
+            }
+            else if (matchedCommand === 'iletisim') {
+                await client.sendMessage(msg.from, `📞 *İletişim Bilgilerimiz:*\nTelefon: 0532 123 45 67\nWeb: www.byramazan.com` + backFooter);
+            }
+            else if (matchedCommand === 'geri') {
+                await client.sendMessage(msg.from, `🔄 Ana menüye dönüldü.\n\nSize nasıl yardımcı olabilirim?` + mainMenuFooter);
+            }
+            // else: If no match and not very cryptic, maybe show help? 
+            // Disabling default fallback to avoid spamming groups.
+
         } catch (err) {
             console.error('Error handling message:', err);
         }
