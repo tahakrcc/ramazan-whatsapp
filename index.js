@@ -14,11 +14,7 @@ let client;
 let qrCodeData = null;
 let connectionStatus = 'INITIALIZING'; // INITIALIZING, QR_READY, CONNECTED
 
-const stringSimilarity = require('string-similarity');
 
-const { Client, RemoteAuth } = require('whatsapp-web.js');
-const { MongoStore } = require('wwebjs-mongo');
-const mongoose = require('mongoose');
 
 const initializeClient = async () => {
     console.log('Initializing WhatsApp Client...');
