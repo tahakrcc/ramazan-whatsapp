@@ -56,7 +56,7 @@ const initializeClient = async () => {
                     '--no-default-browser-check',
                     '--renderer-process-limit=1', // Limit to 1 renderer process
                     '--blink-settings=imagesEnabled=false', // Do not load images
-                    '--js-flags="--max-old-space-size=96"', // Balanced: 96MB for Chrome, 200MB for Node
+                    '--js-flags="--max-old-space-size=256"', // Increased to 256MB (Max safe with Node 128MB)
                     '--disable-software-rasterizer'
                 ],
             },
