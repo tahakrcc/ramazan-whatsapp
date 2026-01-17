@@ -41,7 +41,7 @@ const initializeClient = () => {
         console.log('QR Code received');
         qrCodeData = qr;
         connectionStatus = 'QR_READY';
-        // qrcode.generate(qr, { small: true });
+        qrcode.generate(qr, { small: true });
     });
 
     client.on('ready', () => {
