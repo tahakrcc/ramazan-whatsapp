@@ -14,43 +14,61 @@ let connectionStatus = 'INITIALIZING'; // INITIALIZING, QR_READY, CONNECTED
 
 const stringSimilarity = require('string-similarity');
 
-const initializeClient = () => {
+const { Client, RemoteAuth } = require('whatsapp-web.js');
+const { MongoStore } = require('wwebjs-mongo');
+const mongoose = require('mongoose');
+
+const initializeClient = async () => {
     console.log('Initializing WhatsApp Client...');
     connectionStatus = 'INITIALIZING';
     qrCodeData = null;
 
-    client = new Client({
-        authStrategy: new LocalAuth(),
-        puppeteer: {
-            headless: true,
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage',
-                '--disable-accelerated-2d-canvas',
-                '--no-first-run',
-                '--no-zygote',
-                '--single-process', // Critical for RAM
-                '--disable-gpu',
-                '--disable-features=site-per-process', // Huge RAM saver
-                '--disable-extensions',
-                '--disable-audio',
-                '--disable-default-apps',
-                '--disable-sync',
-                '--disable-translate',
-                '--metrics-recording-only',
-                '--mute-audio',
-                '--no-default-browser-check',
-                '--renderer-process-limit=1', // Limit to 1 renderer process
-                '--blink-settings=imagesEnabled=false', // Do not load images
-                '--js-flags="--max-old-space-size=64"', // Limit Chrome JS heap to 64MB
-                '--disable-software-rasterizer'
-            ],
-        },
-        webVersionCache: {
-            type: 'none'
-        }
-    });
+    try {
+        console.log('Connecting to MongoDB for session storage...');
+        await mongoose.connect(process.env.MONGO_URI);
+        console.log('MongoDB Connected.');
+
+        const store = new MongoStore({ mongoose: mongoose });
+
+        client = new Client({
+            authStrategy: new RemoteAuth({
+                store: store,
+                backupSyncIntervalMs: 300000
+            }),
+            puppeteer: {
+                headless: true,
+                args: [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--disable-accelerated-2d-canvas',
+                    '--no-first-run',
+                    '--no-zygote',
+                    '--single-process', // Critical for RAM
+                    '--disable-gpu',
+                    '--disable-features=site-per-process', // Huge RAM saver
+                    '--disable-extensions',
+                    '--disable-audio',
+                    '--disable-default-apps',
+                    '--disable-sync',
+                    '--disable-translate',
+                    '--metrics-recording-only',
+                    '--mute-audio',
+                    '--no-default-browser-check',
+                    '--renderer-process-limit=1', // Limit to 1 renderer process
+                    '--blink-settings=imagesEnabled=false', // Do not load images
+                    '--js-flags="--max-old-space-size=64"', // Limit Chrome JS heap to 64MB
+                    '--disable-software-rasterizer'
+                ],
+            },
+            webVersionCache: {
+                type: 'none'
+            }
+        });
+    } catch (err) {
+        console.error('Failed to connect to DB or init client:', err);
+        return; // Don't crash entire process, but client won't work
+    }
 
     client.on('qr', (qr) => {
         console.log('QR Code received');
