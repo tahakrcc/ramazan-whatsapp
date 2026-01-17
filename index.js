@@ -50,6 +50,28 @@ const initializeClient = () => {
         qrCodeData = null;
     });
 
+    client.on('message', async msg => {
+        try {
+            console.log('Message received:', msg.body);
+            const chat = await msg.getChat();
+            const contact = await msg.getContact();
+            const message = msg.body.toLowerCase();
+
+            // Auto-reply logic
+            if (message === 'ping') {
+                await msg.reply('pong');
+            } else if (message.includes('merhaba') || message.includes('selam')) {
+                await client.sendMessage(msg.from, `Merhaba ${contact.pushname || 'Misafir'}! 👋\n\n*By Ramazan* Asistanı'na hoş geldiniz.\n\nSize nasıl yardımcı olabilirim?\n- *Randevu* almak için randevu yazın.\n- *Adres* bilgisi için adres yazın.\n- *İletişim* için iletişim yazın.`);
+            } else if (message.includes('adres') || message.includes('konum')) {
+                await client.sendMessage(msg.from, `📍 *Adresimiz:*\nMovenpick Hotel -1 Kat - Malatya\n\n🗺️ *Harita:* https://www.google.com/maps?q=38.351147,38.285103`);
+            } else if (message.includes('randevu')) {
+                await client.sendMessage(msg.from, `📅 *Randevu Oluşturma*\n\nLütfen web sitemizi ziyaret ederek veya 0532 123 45 67 numarasını arayarak randevunuzu planlayın.\n\nwww.byramazan.com`);
+            }
+        } catch (err) {
+            console.error('Error handling message:', err);
+        }
+    });
+
     client.on('authenticated', () => {
         console.log('WhatsApp Authenticated');
     });
