@@ -4,6 +4,7 @@ const { MongoStore } = require('wwebjs-mongo');
 const mongoose = require('mongoose');
 const qrcode = require('qrcode-terminal');
 const cors = require('cors');
+const stringSimilarity = require('string-similarity');
 
 const app = express();
 app.use(cors({ origin: '*' }));
