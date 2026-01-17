@@ -183,7 +183,7 @@ const initializeClient = async () => {
 };
 
 // Start the client
-initializeClient();
+initializeClient().catch(err => console.error('Site-wide initialization failed:', err));
 
 // --- API Endpoints ---
 
