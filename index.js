@@ -40,7 +40,11 @@ const initializeClient = () => {
                 '--disable-translate',
                 '--metrics-recording-only',
                 '--mute-audio',
-                '--no-default-browser-check'
+                '--no-default-browser-check',
+                '--renderer-process-limit=1', // Limit to 1 renderer process
+                '--blink-settings=imagesEnabled=false', // Do not load images
+                '--js-flags="--max-old-space-size=64"', // Limit Chrome JS heap to 64MB
+                '--disable-software-rasterizer'
             ],
         },
         webVersionCache: {
